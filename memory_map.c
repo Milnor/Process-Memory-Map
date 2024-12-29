@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define FMT_CHR         "%-16s  %p  %c\n"
 #define FMT_HEX         "%-16s  %p  %-.32x\n"
@@ -36,6 +37,8 @@ size_t get_last_envp(char * environ[])
 
 int main(int argc, char * argv[], char * envp[])
 {
+    pid_t pid = getpid();   // function never fails
+    printf("Virtual Memory Address Space of %s (PID: %d)\n", argv[0], pid);
     
     // stack
     printf(FMT_INT, "argc", &argc, argc);
