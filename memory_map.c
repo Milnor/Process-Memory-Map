@@ -5,6 +5,11 @@
 #include <string.h>
 #include <unistd.h>
 
+/* Dynamically generated, defines
+ * MMIO_BASE, MMIO_SIZE, and DEVICE_NAME
+ */
+#include "mmio.h"
+
 #define FMT_CHR         "%-16s  %p  %c\n"
 #define FMT_HEX         "%-16s  %p  %-.32x\n"
 #define FMT_INT         "%-16s  %p  %d\n"

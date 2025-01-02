@@ -54,3 +54,7 @@ dkms.conf
 # Folders for executables
 debug/*
 release/*
+
+# This is an odd edge case, but this source file
+# is dynamically generated.
+mmio.h
