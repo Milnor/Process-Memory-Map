@@ -1,8 +1,10 @@
 #include <elf.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 /* Dynamically generated, defines
@@ -17,6 +19,7 @@
 
 #define ALLOC_SIZE      1024
 #define ONE_DIGIT_MAX   9
+#define MEMORY          "/dev/mem"
 
 extern char etext, edata, end;
 
@@ -38,6 +41,42 @@ size_t get_last_envp(char * environ[])
         i++;
     }
     return i;
+}
+
+void print_mmio()
+{
+    int fd;
+    void * mmio;
+
+    if (strlen(DEVICE_NAME) == strlen("SKIP") && 0 == strncmp("SKIP", DEVICE_NAME, strlen("SKIP"))) 
+    {
+        return;
+    }  
+
+    fd = open(MEMORY, O_RDWR | O_SYNC);
+    if (fd < 0) 
+    {
+        fprintf(stderr, "[-] Failed to open %s\n", MEMORY);
+        // fail gracefully
+        return;
+    }
+
+    mmio = mmap(NULL, MMIO_SIZE, PROT_READ, MAP_SHARED, fd, MMIO_BASE);
+    if (mmio == MAP_FAILED)
+    {
+        // still not too late to fail gracefully
+        close(fd);
+        fprintf(stderr, "[-] mmap failed\n");
+        return;
+    }
+
+    unsigned int * value = (unsigned int *)mmio;
+
+    printf(FMT_HEX, "mmio", mmio, *value);
+
+    // TODO: unmap
+    close(fd);
+
 }
 
 int main(int argc, char * argv[], char * envp[])
@@ -99,6 +138,8 @@ int main(int argc, char * argv[], char * envp[])
     // .text
     printf(FMT_HEX, "main()", (void *) main,  main);
     printf(FMT_CHR, "etext", &etext, etext); 
+
+    print_mmio();
 
     free(alloc1);
     free(alloc2);

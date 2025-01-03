@@ -16,11 +16,20 @@ class Peripheral:
     def __str__(self):
         red = "\033[31m"
         reset = "\033[0m"
-        fields = f"{self.address} {self.name} {self.mem_start:#X} - {self.mem_end:#x} {self.mem_length}"
+        fields = f"{self.address} {self.name} {self.mem_start:#x} - {self.mem_end:#x} {self.mem_length}"
         if self.mem_length > 0:
             return fields
         else:
+            # Flag as useless for our purposes
             return red + fields + reset
+
+def insert_mmio_data(default_header: str, pci_device: Peripheral) -> str:
+    # No fancy regex needed
+    header = default_header.replace("0x0000", f"{pci_device.mem_start:#x}") # MMIO_BASE
+    header = header.replace("0x1000", f"{pci_device.mem_length:#x}") # MMIO_SIZE
+    header = header.replace("SKIP", pci_device.name) # DEVICE_NAME
+
+    return header
 
 def parse_address_range(range: str):
     """Return the first start address, end address, and length."""
@@ -34,8 +43,6 @@ def parse_address_range(range: str):
 def select_pci_device(header: str, lspci: str) -> str:
     all_peripherals = []
     devices = lspci.split("\n")
-    #for index, device in enumerate(devices):
-    #    print(f"{index}: {device}")
     for device in devices:
         if ":" in device: # omit junk entry at end of list
             address, long_name = device.split(" ", 1)
@@ -55,8 +62,12 @@ def select_pci_device(header: str, lspci: str) -> str:
 
     for index, device in enumerate(all_peripherals):
         print(f"{index: >2}: {device}")
-
-    return header
+    
+    # TODO: input validation; also make the wording more accessible than
+    # saying "don't pick a red one"...
+    selected = int(input(f"Select a PCI device [0-{len(all_peripherals)-1}]: "))
+    
+    return insert_mmio_data(header, all_peripherals[selected])
 
 def main(args):
 
